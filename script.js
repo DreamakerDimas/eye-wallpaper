@@ -162,23 +162,29 @@ xSlider.addEventListener('input', updateImagePosition);
 ySlider.addEventListener('input', updateImagePosition);
 */
 
-var eye = document.getElementById("eyeLid");
-var images = ["./assets/eyecloseup_lid_open(3).png", "./assets/eyecloseup_lid_closing(2).png", "./assets/eyecloseup_lid_closed(1).png"]; // Array of images
-var currentState = 0;
-var reverse = false;
+let eye = document.getElementById("eyeLid");
+let images = ["./assets/eyecloseup_lid_open(3).png", "./assets/eyecloseup_lid_closing(2).png", "./assets/eyecloseup_lid_closed(1).png"]; // Array of images
+let currentState = 0;
+let reverse = false;
 
 // Define a function that updates the eye image
-function updateImage() {
-    if (currentState === images.length - 1) {
-        reverse = true; // Reverse the animation if the last image is reached
-    } else if (currentState === 0) {
-        reverse = false; // Reset the animation if the first image is reached again
+function updateImage(stop, newState) {
+    if (newState) {
+        currentState = newState;
     }
 
-    if (!reverse) {
-        currentState++;
-    } else {
-        currentState--;
+    if (!stop) {
+        if (currentState === images.length - 1) {
+            reverse = true; // Reverse the animation if the last image is reached
+        } else if (currentState === 0) {
+            reverse = false; // Reset the animation if the first image is reached again
+        }
+
+        if (!reverse) {
+            currentState++;
+        } else {
+            currentState--;
+        }
     }
 
     if (currentState == 2) {
@@ -189,7 +195,11 @@ function updateImage() {
     eye.style.zIndex = "411";
 }
 
+let isBlinking = false;
+let isClosedEye = false;
+
 const blink = () => {
+    isBlinking = true;
     let nestedInterval = setInterval(updateImage, 80);
 
     setTimeout(function () {
@@ -197,8 +207,61 @@ const blink = () => {
     }, 640);
 }
 
+const closeEye = () => {
+    isClosedEye = true;
+    updateImage(true, 1);
+    setTimeout(() => {
+        updateImage(true, 2);
+    }, 100);
+
+    const interval = setInterval(function () {
+        if (!isClosedEye) {
+            clearInterval(interval);
+            currentState = 0;
+            blink();
+        }
+    }, 100);
+}
+
 setInterval(blink, 10000);
 
-addEventListener('dblclick', () => {
-    blink();
-})
+let closedTimeout = null;
+let blinkTimeout = null;
+
+const closedCb = () => {
+    isClosedEye = false;
+    closedTimeout = null;
+}
+const blinkEvent = () => {
+    console.log(isBlinking,isClosedEye)
+    if (!isBlinking) {
+        if (!blinkTimeout) {
+            blink()
+            blinkTimeout = setTimeout(() => {
+                isBlinking = false;
+                blinkTimeout = null;
+            }, 1000)
+        } else {
+            clearTimeout(blinkTimeout);
+            clearTimeout(closedTimeout);
+            closedTimeout = null;
+            blinkTimeout = setTimeout(() => {
+                isBlinking = false;
+                blinkTimeout = null;
+            }, 1000)
+        }
+    } else {
+        if (!closedTimeout) {
+            // trigger close eye
+            closeEye();
+            closedTimeout = setTimeout(closedCb, 1000)
+        } else {
+            // wait until event will not be triggered
+            clearTimeout(blinkTimeout);
+            blinkTimeout = null;
+            clearTimeout(closedTimeout);
+            closedTimeout = setTimeout(closedCb, 1000)
+        }
+    }
+}
+addEventListener('mousedown', blinkEvent)
