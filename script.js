@@ -1,3 +1,17 @@
+// function drawCircle(ctx, x, y, radius, fill, stroke, strokeWidth) {
+//     ctx.beginPath()
+//     ctx.arc(x, y, radius, 0, 2 * Math.PI, false)
+//     if (fill) {
+//         ctx.fillStyle = fill
+//         ctx.fill()
+//     }
+//     if (stroke) {
+//         ctx.lineWidth = strokeWidth
+//         ctx.strokeStyle = stroke
+//         ctx.stroke()
+//     }
+// }
+
 const canvas = document.getElementById("boundary");
 const ctx = canvas.getContext("2d");
 
@@ -23,8 +37,8 @@ let topOffset = 0;
 canvas.style.top = topOffset + "px";
 
 // Calculate center of boundary
-let boundaryCenterX = boundaryX + boundaryWidth / 2 - 400;
-let boundaryCenterY = boundaryY + boundaryHeight / 2 + topOffset + 5;
+let boundaryCenterX;
+let boundaryCenterY;
 
 // Set up variables for image position
 let imageX = boundaryCenterX;
@@ -38,7 +52,7 @@ let targetImageY = imageY;
 let targetReflectX = reflectX;
 let targetReflectY = reflectY;
 
-const lerpFactor = 0.1; // Adjust this value to control the smoothness
+const lerpFactor = 0.02; // Adjust this value to control the smoothness
 
 function lerp(start, end, t) {
     return start + t * (end - start);
@@ -47,8 +61,8 @@ function lerp(start, end, t) {
 // Add event listener to track mouse position
 window.scrollTo({top: 400, left: 30, behavior: 'smooth'});
 canvas.addEventListener("mousemove", (e) => {
-    let mouseX = e.clientX - 327;
-    let mouseY = e.clientY - 60;
+    let mouseX = e.clientX - boundaryWidth * 1.5;
+    let mouseY = e.clientY + boundaryHeight;
 
     // Calculate distance between mouse and boundary center
     const distanceX = mouseX - boundaryCenterX;
@@ -57,8 +71,8 @@ canvas.addEventListener("mousemove", (e) => {
 
     // Check if mouse is inside boundary
     if (
-        distanceX ** 2 / (boundaryWidth / 2) ** 2 +
-        distanceY ** 2 / (boundaryHeight / 2) ** 2 <= 1.1
+        (distanceX ** 2 / (boundaryWidth / 2) ** 2 +
+        distanceY ** 2 / (boundaryHeight / 2) ** 2 <= 1.1)
     ) { // Give some leeway so the eye doesn't snap to boundary
         // Move image to mouse position
         targetImageX = mouseX;
@@ -82,8 +96,8 @@ function recalculateBoundaries() {
     boundaryX = canvas.width / 2 - boundaryWidth / 2;
     boundaryY = canvas.height / 2 - boundaryHeight / 2;
 
-    boundaryCenterX = boundaryX + boundaryWidth / 2 - 235;
-    boundaryCenterY = boundaryY + boundaryHeight / 2 + topOffset + 5;
+    boundaryCenterX = boundaryX + boundaryWidth / 2 - 300;
+    boundaryCenterY = boundaryY + boundaryHeight / 2 + topOffset + 25;
 
     imageX = boundaryCenterX;
     imageY = boundaryCenterY;
@@ -118,6 +132,13 @@ function update() {
     // Draw image
     ctx.drawImage(image, imageX - image.width / 2, imageY - image.height / 2);
     ctx.drawImage(eyeReflect, reflectX - eyeReflect.width / 2, reflectY - eyeReflect.height / 2);
+
+    // drawCircle(ctx, boundaryCenterX, boundaryCenterY, 5, "purple", "black", 1);
+    // drawCircle(ctx, boundaryCenterX + boundaryWidth / 2, boundaryCenterY + boundaryHeight / 2, 5, "orange", "black", 1);
+    // drawCircle(ctx, boundaryCenterX - boundaryWidth / 2, boundaryCenterY - boundaryHeight / 2, 5, "orange", "black", 1);
+    // drawCircle(ctx, boundaryCenterX + boundaryWidth / 2, boundaryCenterY - boundaryHeight / 2, 5, "orange", "black", 1);
+    // drawCircle(ctx, boundaryCenterX - boundaryWidth / 2, boundaryCenterY + boundaryHeight / 2, 5, "orange", "black", 1);
+
 
     // Request next frame
     requestAnimationFrame(update);
