@@ -197,71 +197,60 @@ function updateImage(stop, newState) {
 
 let isBlinking = false;
 let isClosedEye = false;
+let mousedownCount = 0;
+let actionTimeout = null;
 
 const blink = () => {
+    if (isBlinking) return;
     isBlinking = true;
-    let nestedInterval = setInterval(updateImage, 80);
+    let nestedInterval = setInterval(() => {
+        if (!isClosedEye)
+        updateImage()
+    }, 80);
 
-    setTimeout(function () {
+    setTimeout(() => {
         clearInterval(nestedInterval);
+        isBlinking = false;
     }, 640);
-}
+};
 
 const closeEye = () => {
+    if (isClosedEye) return;
     isClosedEye = true;
     updateImage(true, 1);
-    setTimeout(() => {
-        updateImage(true, 2);
-    }, 100);
+    setTimeout(() => updateImage(true, 2), 100);
 
-    const interval = setInterval(function () {
+    const interval = setInterval(() => {
         if (!isClosedEye) {
             clearInterval(interval);
             currentState = 0;
             blink();
         }
     }, 100);
-}
 
-setInterval(blink, 10000);
+    // Automatically open eyes after a certain period
+    setTimeout(() => {
+        isClosedEye = false;
+    }, 2000); // Adjust the time as needed
+};
 
-let closedTimeout = null;
-let blinkTimeout = null;
+const resetActionTimeout = () => {
+    if (actionTimeout) clearTimeout(actionTimeout);
+    actionTimeout = setTimeout(() => {
+        mousedownCount = 0;
+    }, 1000);
+};
 
-const closedCb = () => {
-    isClosedEye = false;
-    closedTimeout = null;
-}
 const blinkEvent = () => {
-    console.log(isBlinking,isClosedEye)
-    if (!isBlinking) {
-        if (!blinkTimeout) {
-            blink()
-            blinkTimeout = setTimeout(() => {
-                isBlinking = false;
-                blinkTimeout = null;
-            }, 1000)
-        } else {
-            clearTimeout(blinkTimeout);
-            clearTimeout(closedTimeout);
-            closedTimeout = null;
-            blinkTimeout = setTimeout(() => {
-                isBlinking = false;
-                blinkTimeout = null;
-            }, 1000)
-        }
+    mousedownCount++;
+
+    if (mousedownCount === 1) {
+        blink();
     } else {
-        if (!closedTimeout) {
-            // trigger close eye
-            closeEye();
-            closedTimeout = setTimeout(closedCb, 1000)
-        } else {
-            // wait until event will not be triggered
-            clearTimeout(blinkTimeout);
-            blinkTimeout = null;
-            clearTimeout(closedTimeout);
-            closedTimeout = setTimeout(closedCb, 1000)
-        }
+        closeEye();
     }
-}
-addEventListener('mousedown', blinkEvent)
+
+    resetActionTimeout();
+};
+
+addEventListener('mousedown', blinkEvent);
