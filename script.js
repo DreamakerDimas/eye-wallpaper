@@ -188,10 +188,17 @@ function updateImage() {
     eye.style.backgroundImage = "url('" + images[currentState] + "')";
     eye.style.zIndex = "411";
 }
-setInterval(function () {
-    var nestedInterval = setInterval(updateImage, 80);
+
+const blink = () => {
+    let nestedInterval = setInterval(updateImage, 80);
 
     setTimeout(function () {
         clearInterval(nestedInterval);
     }, 640);
-}, 10000);
+}
+
+setInterval(blink, 10000);
+
+addEventListener('dblclick', () => {
+    blink();
+})
