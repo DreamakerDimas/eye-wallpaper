@@ -254,3 +254,4 @@ const blinkEvent = () => {
 };
 
 addEventListener('mousedown', blinkEvent);
+setInterval(blink, 10000);
