@@ -33,13 +33,13 @@ body,
 canvas {
     margin: 0;
     padding: 0;
-    height: 170%;
-    width: 170%;
+    height: 150%;
+    width: 150%;
     z-index: 10;
 }
 body{
     background-color: #000;
-    zoom: 170%;
+    zoom: 150%;
     overflow:hidden;
 }
 #boundary{

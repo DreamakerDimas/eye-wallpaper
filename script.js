@@ -12,19 +12,19 @@ image.id = "pupil_sclera";
 
 const eyeReflect = new Image();
 eyeReflect.src = "./assets/eyecloseup_pupil_reflect_side.png";
-image.id = "reflect";
+eyeReflect.id = "reflect";
 
-const boundaryWidth = 250/1.2;
-const boundaryHeight = 200/2.4;
-const boundaryX = canvas.width / 2 - boundaryWidth / 2;
-const boundaryY = canvas.height / 2 - boundaryHeight / 2;
+const boundaryWidth = 250 / 1.2;
+const boundaryHeight = 200 / 2.4;
+let boundaryX = canvas.width / 2 - boundaryWidth / 2;
+let boundaryY = canvas.height / 2 - boundaryHeight / 2;
 
-let topOffset = 0
+let topOffset = 0;
 canvas.style.top = topOffset + "px";
 
 // Calculate center of boundary
-const boundaryCenterX = boundaryX + boundaryWidth / 2-335;
-const boundaryCenterY = boundaryY + boundaryHeight / 2 + topOffset + 5;
+let boundaryCenterX = boundaryX + boundaryWidth / 2 - 400;
+let boundaryCenterY = boundaryY + boundaryHeight / 2 + topOffset + 5;
 
 // Set up variables for image position
 let imageX = boundaryCenterX;
@@ -33,11 +33,22 @@ let imageY = boundaryCenterY;
 let reflectX = boundaryCenterX + 30 + 10;
 let reflectY = boundaryCenterY - 30 - 7;
 
+let targetImageX = imageX;
+let targetImageY = imageY;
+let targetReflectX = reflectX;
+let targetReflectY = reflectY;
+
+const lerpFactor = 0.1; // Adjust this value to control the smoothness
+
+function lerp(start, end, t) {
+    return start + t * (end - start);
+}
+
 // Add event listener to track mouse position
-window.scrollTo({top:400,left: 30, behavior: 'smooth'});
+window.scrollTo({top: 400, left: 30, behavior: 'smooth'});
 canvas.addEventListener("mousemove", (e) => {
-    let mouseX = (e.clientX-327);
-    let mouseY = (e.clientY-60);
+    let mouseX = e.clientX - 327;
+    let mouseY = e.clientY - 60;
 
     // Calculate distance between mouse and boundary center
     const distanceX = mouseX - boundaryCenterX;
@@ -46,58 +57,75 @@ canvas.addEventListener("mousemove", (e) => {
 
     // Check if mouse is inside boundary
     if (
-    distanceX ** 2 / (boundaryWidth / 2) ** 2 +
+        distanceX ** 2 / (boundaryWidth / 2) ** 2 +
         distanceY ** 2 / (boundaryHeight / 2) ** 2 <= 1.1
-    ) {// give some leeway so the eye doesn't snap to boundary
-    // Move image to mouse position
-    imageX = mouseX;
-    imageY = mouseY;
-    image.style.zIndex = 10;
-    reflectX = mouseX + 30 + 10 + 4;
-    reflectY = mouseY - 30 - 4;
-    
+    ) { // Give some leeway so the eye doesn't snap to boundary
+        // Move image to mouse position
+        targetImageX = mouseX;
+        targetImageY = mouseY;
+        targetReflectX = mouseX + 30 + 10 + 4;
+        targetReflectY = mouseY - 30 - 4;
     } else {
-    // Move image back to center of boundary
-    const angle = Math.atan2(distanceY, distanceX);
-    imageX = boundaryCenterX + (boundaryWidth / 2) * Math.cos(angle);
-    imageY = boundaryCenterY + (boundaryHeight / 2) * Math.sin(angle);
-    reflectX = boundaryCenterX + (boundaryWidth / 2) * Math.cos(angle)+ 30 + 10;
-    reflectY = boundaryCenterY + (boundaryHeight / 2) * Math.sin(angle)-30 - 7;
-    image.style.zIndex = 10;
+        // Move image back to center of boundary
+        const angle = Math.atan2(distanceY, distanceX);
+        targetImageX = boundaryCenterX + (boundaryWidth / 2) * Math.cos(angle);
+        targetImageY = boundaryCenterY + (boundaryHeight / 2) * Math.sin(angle);
+        targetReflectX = boundaryCenterX + (boundaryWidth / 2) * Math.cos(angle) + 30 + 10;
+        targetReflectY = boundaryCenterY + (boundaryHeight / 2) * Math.sin(angle) - 30 - 7;
     }
 });
 
-// Update canvas every 60 frames per second
-setInterval(() => {
+function recalculateBoundaries() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    boundaryX = canvas.width / 2 - boundaryWidth / 2;
+    boundaryY = canvas.height / 2 - boundaryHeight / 2;
+
+    boundaryCenterX = boundaryX + boundaryWidth / 2 - 235;
+    boundaryCenterY = boundaryY + boundaryHeight / 2 + topOffset + 5;
+
+    imageX = boundaryCenterX;
+    imageY = boundaryCenterY;
+
+    reflectX = boundaryCenterX + 30 + 10;
+    reflectY = boundaryCenterY - 30 - 7;
+
+    targetImageX = imageX;
+    targetImageY = imageY;
+    targetReflectX = reflectX;
+    targetReflectY = reflectY;
+}
+
+window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    recalculateBoundaries();
+    // Recalculate boundary positions and center points
+});
+recalculateBoundaries();
+
+function update() {
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw boundary
-    /*ctx.beginPath();
-    ctx.ellipse(
-    boundaryCenterX,
-    boundaryCenterY,
-    boundaryWidth / 2,
-    boundaryHeight / 2,
-    0,
-    0,
-    Math.PI * 2
-    );
-    ctx.stroke();*/
+    // Interpolate current position towards target position
+    imageX = lerp(imageX, targetImageX, lerpFactor);
+    imageY = lerp(imageY, targetImageY, lerpFactor);
+    reflectX = lerp(reflectX, targetReflectX, lerpFactor);
+    reflectY = lerp(reflectY, targetReflectY, lerpFactor);
 
     // Draw image
-    ctx.drawImage(
-    image,
-    imageX - image.width / 2,
-    imageY - image.height / 2
-    );
-    image.setAttribute("id", "pupil_sclera");
-    $('pupil_sclera').css("zindex", "100");
-    ctx.drawImage(eyeReflect, reflectX - eyeReflect.width/2, reflectY - eyeReflect.height/2);
-    eyeReflect.setAttribute("id", "reflect");
-    $('reflect').css("zindex", "101");
+    ctx.drawImage(image, imageX - image.width / 2, imageY - image.height / 2);
+    ctx.drawImage(eyeReflect, reflectX - eyeReflect.width / 2, reflectY - eyeReflect.height / 2);
 
-}, 1000 / 60);
+    // Request next frame
+    requestAnimationFrame(update);
+}
+
+// Start the animation loop
+update();
+
 /*
 const resize = document.getElementById('eyeShine');
 const xSlider = document.getElementById('left');
@@ -110,7 +138,8 @@ function updateImagePosition() {
 }
 
 xSlider.addEventListener('input', updateImagePosition);
-ySlider.addEventListener('input', updateImagePosition);*/
+ySlider.addEventListener('input', updateImagePosition);
+*/
 
 var eye = document.getElementById("eyeLid");
 var images = ["./assets/eyecloseup_lid_open(3).png", "./assets/eyecloseup_lid_closing(2).png", "./assets/eyecloseup_lid_closed(1).png"]; // Array of images
@@ -127,22 +156,21 @@ function updateImage() {
 
     if (!reverse) {
         currentState++;
-        
     } else {
         currentState--;
     }
 
-    if(currentState == 2){
-        setTimeout(function(){}, 1);
+    if (currentState == 2) {
+        setTimeout(function () {}, 1);
     }
 
     eye.style.backgroundImage = "url('" + images[currentState] + "')";
-    $('eyeLid').css("zindex","411");
+    eye.style.zIndex = "411";
 }
-setInterval( function() {
+setInterval(function () {
     var nestedInterval = setInterval(updateImage, 80);
 
     setTimeout(function () {
         clearInterval(nestedInterval);
     }, 640);
-},10000);
+}, 10000);
